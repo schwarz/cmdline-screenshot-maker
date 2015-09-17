@@ -7,6 +7,8 @@ Usage:
 -quality 100                  file quality for jpeg (between 0 and 100)
 -resize 50                    image size, % of the original size (between 1 and 99)
 
+-filename accepts strftime formatting codes for the current date/time.
+
 */
 
 #include <windows.h>
@@ -69,6 +71,13 @@ int APIENTRY wWinMain(HINSTANCE hInstance,
 	{
 		if(GetEncoderClsid(encoder, &encoderClsid) != -1)
 		{
+			std::time_t t = std::time(nullptr);		
+			tm *ti = std::localtime(&t);
+
+			// will cause issues if the resulting path is 260+ long
+			wchar_t formattedFilename[260];
+			wcsftime(formattedFilename, 260, filename, ti);
+
 			if(quality >= 0 && quality <= 100 && wcscmp(encoder, L"image/jpeg") == 0)
 			{
 				encoderParameters.Count = 1;
@@ -77,10 +86,10 @@ int APIENTRY wWinMain(HINSTANCE hInstance,
 				encoderParameters.Parameter[0].NumberOfValues = 1;
 				encoderParameters.Parameter[0].Value = &quality;
 
-				stat = b->Save(filename, &encoderClsid, &encoderParameters);
+				stat = b->Save(formattedFilename, &encoderClsid, &encoderParameters);
 			}
 			else
-				stat = b->Save(filename, &encoderClsid, NULL);
+				stat = b->Save(formattedFilename, &encoderClsid, NULL);
 		}
 
 		delete b;
